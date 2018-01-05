@@ -1,2 +1,2 @@
 # RodneCislo
-Slovak/Czech Personal Identification Number Parser/Validator/Value Object
+Czech Republic and Slovakia national identification number Parser/Validator/Value Object
