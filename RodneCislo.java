@@ -6,10 +6,10 @@ public class RodneCislo {
 
     public static RodneCislo parseOrThrow(String rodneCislo) throws IllegalArgumentException {
         RodneCislo result = parseOrNull(rodneCislo);
-        if (result != null) {
-            return result;
+        if (result == null) {
+            throw new IllegalArgumentException("Unable to parse string: " + rodneCislo);
         }
-        throw new IllegalArgumentException("Unable to parse string: " + rodneCislo);
+        return result;
     }
 
     public static RodneCislo parseOrNull(String rodneCislo) {
@@ -30,12 +30,15 @@ public class RodneCislo {
         if (normalizedValue.length() == 9) {
             year += 1900;
         } else {
-            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
-            int currentCentury = (currentYear / 100) * 100;
-            year += currentCentury - (year > currentYear - currentCentury ? 100 : 0);
+            int currentYear = new GregorianCalendar().get(Calendar.YEAR);
+            year += (currentYear / 100) * 100;
+
+            if (year > currentYear) {
+                year -= 100;
+            }
         }
 
-        if (year > 1953 && !isChecksumValid(normalizedValue)) {
+        if ((year > 1953 || normalizedValue.length() == 10) && !isChecksumValid(normalizedValue)) {
             return null;
         }
 
@@ -51,17 +54,14 @@ public class RodneCislo {
             month -= 20;
         }
 
-        GregorianCalendar date = new GregorianCalendar(year, month - 1, day);
-        date.setLenient(false);
+        Date dateOfBirth = getValidDateOrNull(year, month, day);
 
-        Date dateOfBirth = null;
-        try {
-            dateOfBirth = date.getTime();
-        } catch (IllegalArgumentException e) {
+        if (dateOfBirth == null) {
             return null;
         }
 
         String formattedValue = normalizedValue.substring(0, 6) + "/" + normalizedValue.substring(6);
+
         return new RodneCislo(formattedValue, normalizedValue, dateOfBirth, male);
     }
 
@@ -81,6 +81,16 @@ public class RodneCislo {
         }
 
         return true;
+    }
+
+    private static Date getValidDateOrNull(int year, int month, int dayOfMonth) {
+        try {
+            GregorianCalendar date = new GregorianCalendar(year, month - 1, dayOfMonth);
+            date.setLenient(false);
+            return date.getTime();
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private String formattedValue;
@@ -123,6 +133,11 @@ public class RodneCislo {
     }
 
     @Override
+    public String toString() {
+        return formattedValue;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -145,11 +160,6 @@ public class RodneCislo {
         } else if (!normalizedValue.equals(other.normalizedValue))
             return false;
         return true;
-    }
-
-    @Override
-    public String toString() {
-        return formattedValue;
     }
 
 }
